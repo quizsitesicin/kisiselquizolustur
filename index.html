@@ -1,13 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>KişiselQuizOlustur</title>
+  <meta charset="UTF-8" />
+  <title>Benim Quizim</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #f5d6e0, #d3cce3);
+      background: linear-gradient(135deg, #f5d6e6, #d7e0f6);
       margin: 0; padding: 20px;
       color: #333;
     }
@@ -37,7 +36,7 @@
     .insta {
       font-size: 16px;
       font-weight: bold;
-      background: linear-gradient(to right, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+      background: linear-gradient(to right, #feda75, #d62976, #962fbf, #4f5bd5);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-top: 30px;
@@ -46,8 +45,126 @@
   </style>
 </head>
 <body>
+  <div class="start-box">
+    <h2>Quiz Oluştur</h2>
+    <input type="text" id="creatorName" placeholder="Instagram kullanıcı adın" />
+    <button onclick="createQuiz()">Quiz Oluştur</button>
+  </div>
 
-<!-- İçerik kısaltıldı, önceki mesajlarda tamamı vardı -->
+  <div class="quiz-box hidden">
+    <h2>Sorularını Gir</h2>
+    <div id="questionsArea"></div>
+    <button onclick="submitQuiz()">Quizi Kaydet</button>
+  </div>
 
+  <div class="solve-box hidden">
+    <h2>Arkadaşın Quizi</h2>
+    <input type="text" id="solverName" placeholder="Adın" />
+    <div id="solveArea"></div>
+    <button onclick="submitAnswers()">Bitir</button>
+  </div>
+
+  <div class="result-box hidden">
+    <h2>Sonuçlar</h2>
+    <div id="resultText"></div>
+    <div class="share-buttons">
+      <button onclick="shareWhatsApp()">WhatsApp’ta Paylaş</button>
+      <button onclick="shareInstagram()">Instagram’da Paylaş</button>
+    </div>
+  </div>
+
+  <div class="insta">@<span id="instaName"></span></div>
+
+  <script>
+    let quizData = { questions: [], answers: [], creator: "" };
+
+    function createQuiz() {
+      const name = document.getElementById("creatorName").value;
+      if (!name) return alert("Kullanıcı adını gir");
+      quizData.creator = name;
+      document.querySelector(".start-box").classList.add("hidden");
+      document.querySelector(".quiz-box").classList.remove("hidden");
+
+      let html = "";
+      for (let i = 1; i <= 10; i++) {
+        html += `
+          <div class="question-block">
+            <input placeholder="Soru ${i}" id="q${i}" />
+            <select id="a${i}">
+              <option value="">Doğru Şıkkı Seç</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
+            </select>
+          </div>`;
+      }
+      document.getElementById("questionsArea").innerHTML = html;
+    }
+
+    function submitQuiz() {
+      for (let i = 1; i <= 10; i++) {
+        const q = document.getElementById(`q${i}`).value;
+        const a = document.getElementById(`a${i}`).value;
+        if (!q || !a) return alert("Tüm soruları doldur");
+        quizData.questions.push({ q, options: ["A", "B", "C", "D"] });
+        quizData.answers.push(a);
+      }
+
+      const params = new URLSearchParams();
+      params.set("creator", quizData.creator);
+      params.set("data", JSON.stringify(quizData));
+
+      const link = `${location.origin}${location.pathname}?${params.toString()}`;
+      prompt("Arkadaşlarınla paylaş:", link);
+    }
+
+    function loadQuizFromURL() {
+      const url = new URL(location.href);
+      const data = url.searchParams.get("data");
+      const creator = url.searchParams.get("creator");
+      if (!data) return;
+
+      quizData = JSON.parse(data);
+      document.querySelector(".solve-box").classList.remove("hidden");
+      document.getElementById("instaName").textContent = creator;
+
+      let html = "";
+      quizData.questions.forEach((item, index) => {
+        html += `
+          <div class="question-block">
+            <p>${item.q}</p>
+            <select id="solve${index}">
+              <option value="">Cevabını Seç</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
+            </select>
+          </div>`;
+      });
+      document.getElementById("solveArea").innerHTML = html;
+    }
+
+    function submitAnswers() {
+      const name = document.getElementById("solverName").value;
+      if (!name) return alert("Adını yaz");
+      let score = 0;
+      quizData.answers.forEach((ans, i) => {
+        const userAns = document.getElementById(`solve${i}`).value;
+        if (ans === userAns) score++;
+      });
+
+      document.querySelector(".solve-box").classList.add("hidden");
+      document.querySelector(".result-box").classList.remove("hidden");
+      document.getElementById("resultText").textContent = `${name}, ${quizData.creator} adlı kişinin quizinde ${score}/10 doğru yaptın.`;
+    }
+
+    function shareWhatsApp() {
+      const msg = document.getElementById("resultText").textContent;
+      const url = encodeURIComponent(location.href);
+      window.open(`https://wa.me/?text=${msg}%0A${url}`);
+    }
+
+    function shareInstagram() {
+      alert("Sonucu ekran görüntüsü alarak Instagram hikayende paylaşabilirsin.");
+    }
+
+    window.onload = loadQuizFromURL;
+  </script>
 </body>
 </html>
